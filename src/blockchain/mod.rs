@@ -1,4 +1,5 @@
 use std::time::SystemTime;
+use sha2::{ Digest, Sha256 };
 
 #[derive(Debug)]
 pub struct Block {
@@ -33,6 +34,23 @@ impl Block {
         println!("previous_hash: {:?}", self.previous_hash);
         println!("transactions: {:?}", self.transactions);
     }
+
+    pub fn hash(&self) -> Vec<u8> {
+        let mut bin = Vec::<u8>::new();
+
+        // add all these to bin
+        bin.extend(self.nonce.to_be_bytes());
+        bin.extend(self.previous_hash.clone());
+        bin.extend(self.time_stamp.to_be_bytes());
+        for tx in self.transactions.iter() {
+            bin.extend(tx.clone());
+        }
+
+        let mut hasher = Sha256::new();
+        hasher.update(bin);
+        // return the result to vec
+        hasher.finalize().to_vec()
+    }
 }
 
 impl BlockChain {
@@ -42,7 +60,7 @@ impl BlockChain {
             chain: Vec::<Block>::new(),
         };
 
-        bc.create_block(0, "Hash for very first blog".to_string().into_bytes());
+        bc.create_block(0, vec![0 as u8; 32]);
         bc
     }
 
@@ -58,5 +76,13 @@ impl BlockChain {
             block.print();
             println!("{}", "*".repeat(59));
         }
+    }
+
+    pub fn last_block(&self) -> &Block {
+        if self.chain.len() > 1 {
+            return &self.chain[self.chain.len() - 1];
+        }
+
+        &self.chain[0]
     }
 }
