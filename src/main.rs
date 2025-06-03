@@ -1,5 +1,43 @@
 pub mod blockchain;
-use blockchain::BlockChain;
+use std::result;
+
+use blockchain::{ Block, BlockChain, BlockSearch, BlockSearchResult };
+
+fn get_block_search_result(result: BlockSearchResult) {
+    match result {
+        BlockSearchResult::Success(block) => {
+            println!("Found given block {:?} ", block);
+        }
+
+        BlockSearchResult::FailOfIndex(index) => {
+            println!("Failed to find block with given index: {}", index);
+        }
+
+        BlockSearchResult::FailOfEmptyBlocks => {
+            println!("The block chain is empty");
+        }
+
+        BlockSearchResult::FailOfPreviousHash(hash) => {
+            println!("No block has previous hash as {:?}", hash);
+        }
+
+        BlockSearchResult::FailOfBlockHash(hash) => {
+            println!("No block has hash as {:?}", hash);
+        }
+
+        BlockSearchResult::FailOfNonce(nonce) => {
+            println!("No block has nonce as {}", nonce);
+        }
+
+        BlockSearchResult::FailOfTimeStamp(time_stamp) => {
+            println!("No block has timestamp as {}", time_stamp);
+        }
+
+        BlockSearchResult::FailOfTransaction(transaction) => {
+            println!("No block contain the given transaction, {:?}", transaction);
+        }
+    }
+}
 
 fn main() {
     // testing the block creation logic
@@ -14,9 +52,19 @@ fn main() {
     println!("Block chain : {:?}", block_chain);
     block_chain.print();
     let previous_hash = block_chain.last_block().hash();
+    let hash_to_find = previous_hash.clone();
+
     block_chain.create_block(1, previous_hash);
     block_chain.print();
+
     let previous_hash = block_chain.last_block().hash();
     block_chain.create_block(2, previous_hash);
     block_chain.print();
+
+    let result = block_chain.search_block(BlockSearch::SearchByIndex(1));
+    get_block_search_result(result);
+    let result = block_chain.search_block(BlockSearch::SearchByIndex(5));
+    get_block_search_result(result);
+    let result = block_chain.search_block(BlockSearch::SearchByBlockHash(hash_to_find));
+    get_block_search_result(result);
 }
