@@ -1,5 +1,5 @@
 pub mod blockchain;
-use std::result;
+use crate::blockchain::{ transaction::Transaction, Serialization };
 
 use blockchain::{ Block, BlockChain, BlockSearch, BlockSearchResult };
 
@@ -52,19 +52,28 @@ fn main() {
     println!("Block chain : {:?}", block_chain);
     block_chain.print();
     let previous_hash = block_chain.last_block().hash();
-    let hash_to_find = previous_hash.clone();
+    // let hash_to_find = previous_hash.clone();
 
     block_chain.create_block(1, previous_hash);
     block_chain.print();
+
+    let tx = Transaction::new("sender".as_bytes().to_vec(), "recipients".as_bytes().to_vec(), 100);
+    println!("Transaction before sereialization: {}", tx);
+    let tx_bin = tx.serialization();
+    println!("bin of tx: {:?}", tx_bin);
+    let tx_1 = Transaction::deserialization(tx_bin);
+    println!("transaction from bin: {}", tx_1);
+
+    block_chain.add_transaction(&tx);
 
     let previous_hash = block_chain.last_block().hash();
     block_chain.create_block(2, previous_hash);
     block_chain.print();
 
-    let result = block_chain.search_block(BlockSearch::SearchByIndex(1));
-    get_block_search_result(result);
-    let result = block_chain.search_block(BlockSearch::SearchByIndex(5));
-    get_block_search_result(result);
-    let result = block_chain.search_block(BlockSearch::SearchByBlockHash(hash_to_find));
-    get_block_search_result(result);
+    // let result = block_chain.search_block(BlockSearch::SearchByIndex(1));
+    // get_block_search_result(result);
+    // let result = block_chain.search_block(BlockSearch::SearchByIndex(5));
+    // get_block_search_result(result);
+    // let result = block_chain.search_block(BlockSearch::SearchByBlockHash(hash_to_find));
+    // get_block_search_result(result);
 }

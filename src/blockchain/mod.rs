@@ -1,5 +1,13 @@
 use std::time::SystemTime;
 use sha2::{ Digest, Sha256 };
+use transaction::*;
+
+pub mod transaction;
+
+pub trait Serialization<T> {
+    fn serialization(&self) -> Vec<u8>;
+    fn deserialization(bytes: Vec<u8>) -> T;
+}
 
 pub enum BlockSearch {
     // tag value
@@ -86,7 +94,11 @@ impl BlockChain {
     }
 
     pub fn create_block(&mut self, nonce: i32, previous_hash: Vec<u8>) {
-        let b = Block::new(nonce, previous_hash);
+        let mut b = Block::new(nonce, previous_hash);
+        for tx in self.transaction_pool.iter() {
+            b.transactions.push(tx.clone());
+        }
+        self.transaction_pool.clear();
         self.chain.push(b);
     }
 
@@ -181,5 +193,15 @@ impl BlockChain {
         }
 
         return BlockSearchResult::FailOfEmptyBlocks;
+    }
+
+    pub fn add_transaction(&mut self, tx: &impl Serialization<Transaction>) {
+        for tx_in_pool in self.transaction_pool.iter() {
+            if *tx_in_pool == tx.serialization() {
+                break;
+            }
+        }
+
+        self.transaction_pool.push(tx.serialization())
     }
 }
