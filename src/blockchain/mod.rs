@@ -1,5 +1,9 @@
-use std::time::SystemTime;
 use sha2::{ Digest, Sha256 };
+use std::cmp::PartialEq;
+use std::ops::AddAssign;
+use std::ops::Index;
+use std::time::Instant;
+use std::time::SystemTime;
 use transaction::*;
 
 pub mod transaction;
@@ -36,6 +40,35 @@ pub struct Block {
     pub previous_hash: Vec<u8>,
     pub time_stamp: u128,
     pub transactions: Vec<Vec<u8>>,
+}
+
+impl AddAssign<i32> for Block {
+    fn add_assign(&mut self, rhs: i32) {
+        self.nonce += rhs;
+    }
+}
+
+impl PartialEq for Block {
+    fn eq(&self, other: &Self) -> bool {
+        let self_hash = self.hash();
+        let other_hash = other.hash();
+        self_hash == other_hash
+    }
+}
+
+impl Index<usize> for BlockChain {
+    type Output = Block;
+    fn index(&self, idx: usize) -> &Self::Output {
+        let res = self.chain.get(idx);
+        match res {
+            Some(block) => {
+                return block;
+            }
+            None => {
+                panic!("index out of range for the chain");
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -83,6 +116,8 @@ impl Block {
 }
 
 impl BlockChain {
+    const DIFFICULTY: usize = 5;
+
     pub fn new() -> Self {
         let mut bc = BlockChain {
             transaction_pool: Vec::<Vec<u8>>::new(),
@@ -99,6 +134,10 @@ impl BlockChain {
             b.transactions.push(tx.clone());
         }
         self.transaction_pool.clear();
+        let now = Instant::now();
+        let proof_hash = BlockChain::do_proof_of_work(&mut b);
+        let elapsed = now.elapsed();
+        println!("compute time: {:?}\nproof for the current block is {:?}", elapsed, proof_hash);
         self.chain.push(b);
     }
 
@@ -134,11 +173,11 @@ impl BlockChain {
 
                 BlockSearch::SearchByPreviousHash(ref hash) => {
                     /*
-                        enum matching can cause data ownership transfer, the hash value
-                        attach to search is transfer to the local variable of hash here,
-                        when the block is executed the value of hash is dropped, then in
-                        next round we will not have any value to get
-                     */
+                       enum matching can cause data ownership transfer, the hash value
+                       attach to search is transfer to the local variable of hash here,
+                       when the block is executed the value of hash is dropped, then in
+                       next round we will not have any value to get
+                    */
                     if block.previous_hash == *hash {
                         return BlockSearchResult::Success(block);
                     }
@@ -203,5 +242,19 @@ impl BlockChain {
         }
 
         self.transaction_pool.push(tx.serialization())
+    }
+
+    fn do_proof_of_work(block: &mut Block) -> String {
+        loop {
+            let hash = block.hash();
+            let hash_str = hex::encode(&hash);
+            // Check if the hash string starts with the required number of leading zeroes (i.e., difficulty target)
+            if hash_str[0..BlockChain::DIFFICULTY] == "0".repeat(BlockChain::DIFFICULTY) {
+                // If the hash meets the difficulty criteria, return it as a valid proof-of-work
+                return hash_str;
+            }
+            // If not valid, increment the block's nonce to try again
+            *block += 1;
+        }
     }
 }

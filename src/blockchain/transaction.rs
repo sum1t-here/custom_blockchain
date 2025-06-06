@@ -1,6 +1,6 @@
-use std::fmt;
 use crate::blockchain::*;
-use borsh::{ BorshSerialize, BorshDeserialize };
+use borsh::{BorshDeserialize, BorshSerialize};
+use std::fmt;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq)]
 pub struct Transaction {
