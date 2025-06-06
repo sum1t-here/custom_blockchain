@@ -40,51 +40,23 @@ fn get_block_search_result(result: BlockSearchResult) {
 }
 
 fn main() {
-    // testing the block creation logic
+    let my_blockchain_address = "my blockchain address";
+    let mut blockchain = BlockChain::new(my_blockchain_address.into());
+    blockchain.print();
 
-    // let b = Block::new(0, "This is the genesis block".to_string().into_bytes());
-    // b.print();
-    // println!("The Genesis block is: {:?}", b);
+    blockchain.add_transaction(&Transaction::new("A".into(), "B".into(), 1));
+    blockchain.mining();
+    blockchain.print();
 
-    // testing the block chain logic
+    blockchain.add_transaction(&Transaction::new("C".into(), "D".into(), 2));
+    blockchain.add_transaction(&Transaction::new("X".into(), "Y".into(), 5));
+    blockchain.mining();
+    blockchain.print();
 
-    // let mut block_chain = BlockChain::new();
-    // println!("Block chain : {:?}", block_chain);
-    // block_chain.print();
-    // let previous_hash = block_chain.last_block().hash();
-    // // let hash_to_find = previous_hash.clone();
-
-    // block_chain.create_block(1, previous_hash);
-    // block_chain.print();
-
-    // let tx = Transaction::new("sender".as_bytes().to_vec(), "recipients".as_bytes().to_vec(), 100);
-    // println!("Transaction before sereialization: {}", tx);
-    // let tx_bin = tx.serialization();
-    // println!("bin of tx: {:?}", tx_bin);
-    // let tx_1 = Transaction::deserialization(tx_bin);
-    // println!("transaction from bin: {}", tx_1);
-
-    // block_chain.add_transaction(&tx);
-
-    // let previous_hash = block_chain.last_block().hash();
-    // block_chain.create_block(2, previous_hash);
-    // block_chain.print();
-
-    // let result = block_chain.search_block(BlockSearch::SearchByIndex(1));
-    // get_block_search_result(result);
-    // let result = block_chain.search_block(BlockSearch::SearchByIndex(5));
-    // get_block_search_result(result);
-    // let result = block_chain.search_block(BlockSearch::SearchByBlockHash(hash_to_find));
-    // get_block_search_result(result);
-
-    // let mut blockchain = BlockChain::new();
-    // blockchain.print();
-
-    // let mut block1 = Block::new(0, "previous hash".as_bytes().to_vec());
-    // let mut block2 = Block::new(0, "previous hash".as_bytes().to_vec());
-    // println!("block1 == block2 : {}", block1 == block2);
-
-    let block_chain = BlockChain::new();
-    let block = &block_chain[0];
-    println!("The first block is {:?}", block);
+    println!(
+        "Value for miner {}",
+        blockchain.calculate_total_amt(my_blockchain_address.to_string())
+    );
+    println!("Value for miner C {}", blockchain.calculate_total_amt("C".to_string()));
+    println!("Value for miner D {}", blockchain.calculate_total_amt("D".to_string()))
 }

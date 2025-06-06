@@ -1,12 +1,12 @@
 use crate::blockchain::*;
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{ BorshDeserialize, BorshSerialize };
 use std::fmt;
 
 #[derive(BorshSerialize, BorshDeserialize, Debug, PartialEq)]
 pub struct Transaction {
-    sender_address: Vec<u8>,
-    recipient_address: Vec<u8>,
-    value: u64,
+    pub sender_address: Vec<u8>,
+    pub recipient_address: Vec<u8>,
+    pub value: u64,
 }
 
 impl Transaction {
