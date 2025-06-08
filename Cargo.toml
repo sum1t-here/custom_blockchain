@@ -7,3 +7,5 @@ edition = "2021"
 borsh = {version = "1.5", features = ["derive"]}
 hex = "0.4.3"
 sha2 = "0.10.9"
+p256 = {version = "0.13", features = ["ecdsa", "arithmetic"]}
+rand_core = "0.6"

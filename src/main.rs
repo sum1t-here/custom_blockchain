@@ -1,62 +1,33 @@
-pub mod blockchain;
-use crate::blockchain::{ transaction::Transaction, Serialization };
-
-use blockchain::{ Block, BlockChain, BlockSearch, BlockSearchResult };
-
-fn get_block_search_result(result: BlockSearchResult) {
-    match result {
-        BlockSearchResult::Success(block) => {
-            println!("Found given block {:?} ", block);
-        }
-
-        BlockSearchResult::FailOfIndex(index) => {
-            println!("Failed to find block with given index: {}", index);
-        }
-
-        BlockSearchResult::FailOfEmptyBlocks => {
-            println!("The block chain is empty");
-        }
-
-        BlockSearchResult::FailOfPreviousHash(hash) => {
-            println!("No block has previous hash as {:?}", hash);
-        }
-
-        BlockSearchResult::FailOfBlockHash(hash) => {
-            println!("No block has hash as {:?}", hash);
-        }
-
-        BlockSearchResult::FailOfNonce(nonce) => {
-            println!("No block has nonce as {}", nonce);
-        }
-
-        BlockSearchResult::FailOfTimeStamp(time_stamp) => {
-            println!("No block has timestamp as {}", time_stamp);
-        }
-
-        BlockSearchResult::FailOfTransaction(transaction) => {
-            println!("No block contain the given transaction, {:?}", transaction);
-        }
-    }
-}
+use p256::ecdsa::{ signature::{ Signer, Verifier }, Signature, SigningKey, VerifyingKey };
+use rand_core::OsRng;
 
 fn main() {
-    let my_blockchain_address = "my blockchain address";
-    let mut blockchain = BlockChain::new(my_blockchain_address.into());
-    blockchain.print();
+    // closure
+    let gen_signing_key = || { SigningKey::random(&mut OsRng) };
 
-    blockchain.add_transaction(&Transaction::new("A".into(), "B".into(), 1));
-    blockchain.mining();
-    blockchain.print();
+    // generate key pair
+    // 32 bytes random number
+    let signing_key = gen_signing_key();
+    let mut verifying_key: Option<VerifyingKey> = None;
+    // mut closure
+    let mut gen_verifying_key = |private_key: &SigningKey| {
+        verifying_key = Some(VerifyingKey::from(private_key));
+    };
 
-    blockchain.add_transaction(&Transaction::new("C".into(), "D".into(), 2));
-    blockchain.add_transaction(&Transaction::new("X".into(), "Y".into(), 5));
-    blockchain.mining();
-    blockchain.print();
+    gen_verifying_key(&signing_key);
 
-    println!(
-        "Value for miner {}",
-        blockchain.calculate_total_amt(my_blockchain_address.to_string())
-    );
-    println!("Value for miner C {}", blockchain.calculate_total_amt("C".to_string()));
-    println!("Value for miner D {}", blockchain.calculate_total_amt("D".to_string()))
+    println!("private key: {:?}", signing_key.to_bytes());
+    println!("public key: {:?}", verifying_key.unwrap().to_encoded_point(false));
+
+    let message = b"Hello World!!!";
+
+    // sign message with private key
+    let signature: Signature = signing_key.sign(message);
+    println!("signature: {:?}", signature);
+
+    let res = verifying_key.unwrap().verify(message, &signature);
+    match res {
+        Ok(_) => println!("Signature verfifed ok"),
+        Err(_) => println!("Signature verification failed"),
+    }
 }
