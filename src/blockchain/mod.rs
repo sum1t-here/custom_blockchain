@@ -5,6 +5,7 @@ use std::ops::Index;
 use std::time::Instant;
 use std::time::SystemTime;
 use transaction::*;
+use crate::wallet::{ Transaction as WalletTransaction, Wallet };
 
 pub mod transaction;
 
@@ -257,14 +258,39 @@ impl BlockChain {
         return BlockSearchResult::FailOfEmptyBlocks;
     }
 
-    pub fn add_transaction(&mut self, tx: &impl Serialization<Transaction>) {
+    pub fn add_transaction(&mut self, tx: &WalletTransaction) -> bool {
+        if tx.sender == self.blockchain_address {
+            println!("miner cannot send money to himself");
+            return false;
+        }
+
+        if tx.sender != BlockChain::MINING_SENDER && !Wallet::verify_transaction(tx) {
+            println!("invalid transaction");
+            return false;
+        }
+
+        if
+            tx.sender != BlockChain::MINING_SENDER &&
+            self.calculate_total_amt(tx.sender.clone()) < (tx.amount as i64)
+        {
+            println!("sender dose not have enough balance");
+            return false;
+        }
+
+        let transaction = Transaction::new(
+            tx.sender.as_bytes().to_vec(),
+            tx.recipient.as_bytes().to_vec(),
+            tx.amount
+        );
+
         for tx_in_pool in self.transaction_pool.iter() {
-            if *tx_in_pool == tx.serialization() {
+            if *tx_in_pool == transaction.serialization() {
                 break;
             }
         }
 
-        self.transaction_pool.push(tx.serialization())
+        self.transaction_pool.push(transaction.serialization());
+        true
     }
 
     fn do_proof_of_work(block: &mut Block) -> String {
@@ -286,11 +312,13 @@ impl BlockChain {
         if a block is mined, a transaction will created and the chain will send
         a coin to the miner
         */
-        let tx = Transaction::new(
-            BlockChain::MINING_SENDER.clone().into(),
-            self.blockchain_address.clone().into(),
-            BlockChain::MINING_REWARD
-        );
+        let tx = WalletTransaction {
+            sender: BlockChain::MINING_SENDER.clone().to_string(),
+            recipient: self.blockchain_address.clone(),
+            amount: BlockChain::MINING_REWARD,
+            signature: "".to_string(),
+            public_key: "".to_string(),
+        };
         self.add_transaction(&tx);
 
         self.create_block(0, self.last_block().hash());
